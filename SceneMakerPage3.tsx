@@ -1,18 +1,17 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Palette, ArrowLeft, Plus } from "lucide-react"
+import { gsap } from "gsap"
+import { ArrowLeft, Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
-import { gsap } from "gsap"
 
-export default function SceneMakerPage2() {
+export default function SceneMakerPage3() {
   const router = useRouter()
   const [currentIndex, setCurrentIndex] = useState(0)
   const isAnimatingRef = useRef(false)
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
-  const lastWheelTime = useRef(0)
-  const wheelAccumulator = useRef(0)
+  const lastScrollTime = useRef(0)
 
   // Card data for cycling
   const cards = [
@@ -29,15 +28,15 @@ export default function SceneMakerPage2() {
     if (!mainElement) return
 
     // Dimensions & offsets
-    const H_EXP = 320,
-      H_COL1 = 48,
-      H_COL2 = 24
-    const W_EXP = 1024,
-      W_COL1 = 768,
-      W_COL2 = 640
+    const H_EXP = 420,
+      H_COL1 = 56,
+      H_COL2 = 28
+    const W_EXP = 1120,
+      W_COL1 = 840,
+      W_COL2 = 700
 
     // 🎯 Change this value to customize the gap between cards
-    const GAP = 3 // Changed from 0 to 8px - adjust this value to your preference
+    const GAP = 8 // Changed from 3 to 8px - adjust this value to your preference
 
     const Y_EXP = 0
     const Y_COL1_UP = -(H_EXP / 2 + GAP + H_COL1 / 2)
@@ -77,13 +76,12 @@ export default function SceneMakerPage2() {
           // Second collapsed card above
           ;[y, h, w, op, z] = [Y_COL2_UP, H_COL2, W_COL2, 0.6, 10]
         } else if (relativePosition === 1) {
-          // Only one collapsed card below - same width as main card
-          // Position card below so its bottom aligns with active card's bottom
+          // Bottom card - starts hidden, positioned with proper gap below active card
           const activeCardBottom = Y_EXP + H_EXP / 2
-          const cardBelowY = activeCardBottom + GAP + H_COL1 / 2 // Added GAP here too
-          ;[y, h, w, op, z] = [cardBelowY, H_COL1, W_EXP, 0.8, 20]
+          const cardBelowY = activeCardBottom + GAP + H_COL1 / 2 // This now uses the same GAP as cards above
+          ;[y, h, w, op, z] = [cardBelowY, 0, W_EXP, 0, 20] // Start with height 0, will grow during animation
         } else {
-          // Hidden cards (including the second card below)
+          // Hidden cards
           y = direction === 1 ? Y_COL2_UP - 100 : direction === -1 ? Y_COL2_DN + 100 : 350
           h = 0
           w = 0
@@ -121,80 +119,63 @@ export default function SceneMakerPage2() {
       })
     }
 
-    // Initial setup
-    animateCardsToPosition(currentIndex)
+    // Initial setup using requestAnimationFrame to ensure DOM and GSAP are ready
+    const rafId = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        animateCardsToPosition(currentIndex)
+      })
+    })
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault()
 
-      // Prevent new animations if one is already running
-      if (isAnimatingRef.current) return
-
+      // Prevent rapid scrolling: 500ms minimum between actions
       const now = Date.now()
-      const timeDelta = now - lastWheelTime.current
+      if (now - lastScrollTime.current < 500) return
 
-      // Reset accumulator if too much time has passed
-      if (timeDelta > 150) {
-        wheelAccumulator.current = 0
-      }
+      // Only react to significant scroll movements
+      if (Math.abs(e.deltaY) < 20) return
 
-      lastWheelTime.current = now
-      wheelAccumulator.current += Math.abs(e.deltaY)
+      lastScrollTime.current = now
 
-      // Only trigger animation when we've accumulated enough wheel delta
-      if (wheelAccumulator.current > 50) {
-        const direction: 1 | -1 = e.deltaY > 0 ? 1 : -1
-        const nextIdx = (currentIndex + direction + cards.length) % cards.length
+      const direction: 1 | -1 = e.deltaY > 0 ? 1 : -1
+      const nextIdx = (currentIndex + direction + cards.length) % cards.length
 
-        // Reset accumulator
-        wheelAccumulator.current = 0
-
-        // Animate to new position
-        animateCardsToPosition(nextIdx, direction)
-        setCurrentIndex(nextIdx)
-      }
+      // Animate to new position
+      animateCardsToPosition(nextIdx, direction)
+      setCurrentIndex(nextIdx)
     }
 
     mainElement.addEventListener("wheel", handleWheel, { passive: false })
 
     return () => {
       mainElement.removeEventListener("wheel", handleWheel)
+      cancelAnimationFrame(rafId)
     }
   }, [currentIndex, cards.length])
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Header */}
-      <header className="border-b border-gray-800 bg-black/95 backdrop-blur">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.back()}
-              className="gap-2 text-white hover:bg-gray-800"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-            <div className="flex items-center gap-2">
-              <Palette className="h-6 w-6 text-primary" />
-              <h1 className="text-2xl font-bold text-white">Scene Maker</h1>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Back Button */}
+      <div className="absolute top-4 left-4 z-50">
+        <Button variant="ghost" size="sm" onClick={() => router.back()} className="gap-2 text-white hover:bg-gray-800">
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
+      </div>
 
       {/* Main Content */}
-      <main className="flex flex-col items-center min-h-[calc(100vh-80px)] p-4 pt-16">
+      <main className="flex flex-col items-center min-h-screen p-4 pt-16 overflow-hidden">
         {/* Card Stack */}
-        <div className="relative w-full max-w-5xl h-[30rem] flex items-center justify-center">
+        <div className="relative w-full max-w-5xl h-[40rem] flex items-center justify-center">
           {cards.map((card, i) => (
             <div
               key={card.id}
-              ref={(el) => (cardRefs.current[i] = el)}
-              className={`absolute rounded-3xl shadow-2xl flex items-center justify-center ${card.gradient}`}
-              style={{ left: "50%" }}
+              ref={(el) => {
+                cardRefs.current[i] = el
+              }}
+              className={`absolute shadow-2xl flex items-center justify-center ${card.gradient}`}
+              style={{ left: "50%", borderRadius: "64px", maxWidth: "calc(133.333cqh)" }}
             >
               <span className="text-white text-xl font-bold">{card.title}</span>
             </div>
