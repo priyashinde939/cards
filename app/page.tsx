@@ -1,6 +1,6 @@
 "use client"
 
-import ScrollingCards from "../scrolling-cards"
+import SceneMakerPage2 from "../SceneMakerPage2"
 import ScrollingCards3 from "../scrolling-cards3"
 import ScrollingCards2 from "../scrolling-cards2"
 import SceneMakerPage from "../SceneMakerPage"
@@ -10,8 +10,8 @@ export default function Page() {
   // return <ScrollingCards3 />
    return (
     <div>
-      <ScrollingCards2 />
-      {/* <SceneMakerPage /> */}
+      {/* <ScrollingCards2 /> */}
+      <SceneMakerPage2 />
     </div>
   );
 }
@@ -20,3 +20,5 @@ export default function Page() {
 // current is 2
 // modified scene maker page is in 3
 // 2 backup in 1
+// remover the 2 bkp from 1 and added new code in 1
+// renamed 1 to SceneMakerPage2
