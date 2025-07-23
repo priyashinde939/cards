@@ -12,7 +12,7 @@ export default function Page() {
    return (
     <div>
       {/* <ScrollingCards2 /> */}
-      <SceneMakerPage/>
+      <SceneMakerPage3/>
     </div>
   );
 }
@@ -28,3 +28,8 @@ export default function Page() {
 
 // now the oola oola code is in SceneMakerPage.tsx
 // and the final was in SceneMakerPage3.tsx
+////////////////////////////////////
+// main code in SceneMakerPage.tsx
+// test code in SceneMakerPage3.tsx
+
+// sceneMakerPage.tsx bkp in sceneMakerPage3.tsx

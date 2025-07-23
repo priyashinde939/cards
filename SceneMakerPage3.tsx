@@ -2,16 +2,17 @@
 
 import { Button } from "@/components/ui/button"
 import { gsap } from "gsap"
-import { ArrowLeft, Plus } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 
-export default function SceneMakerPage3() {
+export default function SceneMakerPage2() {
   const router = useRouter()
   const [currentIndex, setCurrentIndex] = useState(0)
   const isAnimatingRef = useRef(false)
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
   const lastScrollTime = useRef(0)
+  const [clipPosition, setClipPosition] = useState(90)
 
   // Card data for cycling
   const cards = [
@@ -27,13 +28,16 @@ export default function SceneMakerPage3() {
     const mainElement = document.querySelector("main")
     if (!mainElement) return
 
-    // Dimensions & offsets
-    const H_EXP = 420,
-      H_COL1 = 56,
-      H_COL2 = 28
-    const W_EXP = 1120,
-      W_COL1 = 840,
-      W_COL2 = 700
+    // Get container width for responsive sizing
+    const containerWidth = Math.min(window.innerWidth * 0.9, 1200) // Max 1200px, 90% of viewport
+
+    // Dimensions & offsets - responsive to container width
+    const H_EXP = 450,
+      H_COL1 = 52,
+      H_COL2 = 26
+    const W_EXP = containerWidth * 0.85, // 85% of container to prevent clipping
+      W_COL1 = containerWidth * 0.65, // 65% of container
+      W_COL2 = containerWidth * 0.55 // 55% of container
 
     // 🎯 Change this value to customize the gap between cards
     const GAP = 8 // Changed from 3 to 8px - adjust this value to your preference
@@ -45,6 +49,19 @@ export default function SceneMakerPage3() {
     const Y_COL2_DN = H_EXP / 2 + GAP + H_COL1 + GAP + H_COL2 / 2
 
     const animateCardsToPosition = (targetIndex: number, direction: 1 | -1 | null = null) => {
+      // Recalculate dimensions for responsive sizing
+      const currentContainerWidth = Math.min(window.innerWidth * 0.9, 1200)
+      const currentW_EXP = currentContainerWidth * 0.85
+      const currentW_COL1 = currentContainerWidth * 0.65
+      const currentW_COL2 = currentContainerWidth * 0.55
+
+      // Calculate clipping position: bottom of expanded card + gap
+      const expandedCardBottom = Y_EXP + H_EXP / 2
+      const clipLine = expandedCardBottom + GAP
+      const containerHeight = 640 // 40rem = 640px
+      const clipPositionPercent = ((containerHeight / 2 + clipLine) / containerHeight) * 100
+      setClipPosition(clipPositionPercent)
+
       // Set animation state immediately
       if (direction !== null) {
         isAnimatingRef.current = true
@@ -68,21 +85,21 @@ export default function SceneMakerPage3() {
 
         if (relativePosition === 0) {
           // Expanded card (current)
-          ;[y, h, w, op, z] = [Y_EXP, H_EXP, W_EXP, 1, 30]
+          ;[y, h, w, op, z] = [Y_EXP, H_EXP, currentW_EXP, 1, 30]
         } else if (relativePosition === cards.length - 1) {
           // First collapsed card above
-          ;[y, h, w, op, z] = [Y_COL1_UP, H_COL1, W_COL1, 0.8, 20]
+          ;[y, h, w, op, z] = [Y_COL1_UP, H_COL1, currentW_COL1, 0.8, 20]
         } else if (relativePosition === cards.length - 2) {
           // Second collapsed card above
-          ;[y, h, w, op, z] = [Y_COL2_UP, H_COL2, W_COL2, 0.6, 10]
+          ;[y, h, w, op, z] = [Y_COL2_UP, H_COL2, currentW_COL2, 0.6, 10]
         } else if (relativePosition === 1) {
-          // Bottom card - starts hidden, positioned with proper gap below active card
+          // Bottom card - visible but positioned to collapse and get clipped
           const activeCardBottom = Y_EXP + H_EXP / 2
-          const cardBelowY = activeCardBottom + GAP + H_COL1 / 2 // This now uses the same GAP as cards above
-          ;[y, h, w, op, z] = [cardBelowY, 0, W_EXP, 0, 20] // Start with height 0, will grow during animation
+          const cardBelowY = activeCardBottom + GAP + H_COL1 / 2
+          ;[y, h, w, op, z] = [cardBelowY, H_COL1, currentW_EXP, 0.8, 20]
         } else {
           // Hidden cards
-          y = direction === 1 ? Y_COL2_UP - 100 : direction === -1 ? Y_COL2_DN + 100 : 350
+          y = direction === 1 ? Y_COL2_UP - 100 : direction === -1 ? Y_COL2_UP - 100 : 350
           h = 0
           w = 0
           op = 0
@@ -100,6 +117,38 @@ export default function SceneMakerPage3() {
             zIndex: z,
           })
         } else {
+          // Special case: new card appearing in bottom position when scrolling UP (when bottom card moves to expanded)
+          if (relativePosition === 1 && direction === 1) {
+            // Force the card to start from below, like the first scroll
+            const activeCardBottom = Y_EXP + H_EXP / 2
+            const startingY = activeCardBottom + GAP + H_COL1 + 80
+
+            // Set starting position immediately before animating
+            gsap.set(card, {
+              x: "-50%",
+              y: startingY,
+              height: "0px",
+              width: "0px",
+              opacity: 0,
+              zIndex: z,
+            })
+          }
+
+          // Special case: cards transitioning to hidden from bottom position when scrolling DOWN
+          if (relativePosition > 1 && direction === -1) {
+            // Check if this is the card that was at bottom position (index currentIndex + 1)
+            const bottomCardIndex = (currentIndex + 1) % cards.length
+            if (i === bottomCardIndex) {
+              // This card is transitioning from bottom to hidden, keep it at bottom position while shrinking
+              const activeCardBottom = Y_EXP + H_EXP / 2
+              const bottomCardY = activeCardBottom + GAP + H_COL1 / 2
+              // Override position to make it move slightly down while shrinking
+              // Keep the same width as the active card
+              y = bottomCardY + 30 // Move 30px down from original bottom position
+              w = currentW_EXP
+            }
+          }
+
           // Animation - maintain center position during animation
           tl.to(
             card,
@@ -110,8 +159,8 @@ export default function SceneMakerPage3() {
               width: `${w}px`,
               opacity: op,
               zIndex: z,
-              duration: 0.5,
-              ease: "power2.out",
+              duration: 0.45,
+              ease: "power2.inOut",
             },
             0,
           )
@@ -146,10 +195,17 @@ export default function SceneMakerPage3() {
       setCurrentIndex(nextIdx)
     }
 
+    const handleResize = () => {
+      // Force a complete recalculation with new dimensions
+      animateCardsToPosition(currentIndex, null)
+    }
+
     mainElement.addEventListener("wheel", handleWheel, { passive: false })
+    window.addEventListener("resize", handleResize)
 
     return () => {
       mainElement.removeEventListener("wheel", handleWheel)
+      window.removeEventListener("resize", handleResize)
       cancelAnimationFrame(rafId)
     }
   }, [currentIndex, cards.length])
@@ -165,16 +221,24 @@ export default function SceneMakerPage3() {
       </div>
 
       {/* Main Content */}
-      <main className="flex flex-col items-center min-h-screen p-4 pt-16 overflow-hidden">
+      <main className="relative flex flex-col items-center min-h-screen p-4 pt-16 overflow-hidden">
         {/* Card Stack */}
-        <div className="relative w-full max-w-5xl h-[40rem] flex items-center justify-center">
+        <div
+          className="relative w-full max-w-5xl h-[40rem] flex items-center justify-center overflow-hidden"
+          style={{
+            maskImage: `linear-gradient(to bottom, black 0%, black ${clipPosition}%, transparent ${clipPosition}%), linear-gradient(to right, black 0%, black 100%)`,
+            WebkitMaskImage: `linear-gradient(to bottom, black 0%, black ${clipPosition}%, transparent ${clipPosition}%), linear-gradient(to right, black 0%, black 100%)`,
+            maskComposite: "intersect",
+            WebkitMaskComposite: "intersect",
+          }}
+        >
           {cards.map((card, i) => (
             <div
               key={card.id}
               ref={(el) => {
                 cardRefs.current[i] = el
               }}
-              className={`absolute shadow-2xl flex items-center justify-center ${card.gradient}`}
+              className={`absolute shadow-2xl flex items-center justify-center overflow-hidden ${card.gradient}`}
               style={{ left: "50%", borderRadius: "64px", maxWidth: "calc(133.333cqh)" }}
             >
               <span className="text-white text-xl font-bold">{card.title}</span>
@@ -187,15 +251,15 @@ export default function SceneMakerPage3() {
           <div className="text-white font-medium">Jul 19 - 1349</div>
         </div>
 
-        {/* New Project Button */}
-        <div className="flex-1 flex items-end justify-center pb-8">
-          <div className="bg-gray-700 hover:bg-gray-600 transition-colors duration-200 rounded-3xl shadow-2xl px-16 py-6 cursor-pointer">
-            <div className="flex items-center justify-center gap-4 text-white font-medium text-lg">
+        {/* New Project Button - positioned with top edge slightly overlapping expanded card bottom */}
+        {/* <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 z-50">
+          <div className="bg-gray-700 hover:bg-gray-600 transition-colors duration-200 rounded-2xl shadow-2xl w-48 h-24 cursor-pointer">
+            <div className="flex items-center justify-center h-full gap-4 text-white font-medium">
               <Plus className="h-6 w-6 font-light" />
-              <span>New project</span>
+              <span className="text-base">New project</span>
             </div>
           </div>
-        </div>
+        </div> */}
       </main>
     </div>
   )
