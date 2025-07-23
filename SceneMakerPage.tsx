@@ -28,18 +28,18 @@ export default function SceneMakerPage2() {
     const mainElement = document.querySelector("main")
     if (!mainElement) return
 
-    // Get container width for responsive sizing - slightly reduced from maximum
-    const containerWidth = Math.min(window.innerWidth * 0.96, 1800) // Reduced from 0.99 to 0.96 and max from 2000 to 1800
+    // Get container width for responsive sizing - maximized width to prevent cropping
+    const containerWidth = Math.min(window.innerWidth * 0.99, 2000) // Increased from 0.98 to 0.99 and max from 1600 to 2000
 
-    // Dimensions & offsets - responsive to container width - slightly smaller than maximum
+    // Dimensions & offsets - responsive to container width - maximized sizes
     const H_EXP = 650, // Keep height the same
       H_COL1 = 80, // Keep height the same
       H_COL2 = 45 // Keep height the same
 
-    // Slightly reduced widths for better balance
-    const W_EXP = containerWidth * 0.93, // Reduced from 96% to 93%
-      W_COL1 = containerWidth * 0.83, // Reduced proportionally
-      W_COL2 = containerWidth * 0.73 // Reduced proportionally
+    // Maximum widths while ensuring no cropping
+    const W_EXP = containerWidth * 0.96, // Increased to 96% of container width
+      W_COL1 = containerWidth * 0.86, // Increased proportionally
+      W_COL2 = containerWidth * 0.76 // Increased proportionally
 
     // 🎯 Change this value to customize the gap between cards
     const GAP = 8 // Changed from 3 to 8px - adjust this value to your preference
@@ -53,10 +53,10 @@ export default function SceneMakerPage2() {
 
     const animateCardsToPosition = (targetIndex: number, direction: 1 | -1 | null = null) => {
       // Recalculate dimensions for responsive sizing
-      const currentContainerWidth = Math.min(window.innerWidth * 0.96, 1800)
-      const currentW_EXP = currentContainerWidth * 0.93
-      const currentW_COL1 = currentContainerWidth * 0.83
-      const currentW_COL2 = currentContainerWidth * 0.73
+      const currentContainerWidth = Math.min(window.innerWidth * 0.99, 2000)
+      const currentW_EXP = currentContainerWidth * 0.96
+      const currentW_COL1 = currentContainerWidth * 0.86
+      const currentW_COL2 = currentContainerWidth * 0.76
 
       // Calculate clipping position: bottom of expanded card + gap
       const expandedCardBottom = Y_EXP + H_EXP / 2
@@ -222,11 +222,11 @@ export default function SceneMakerPage2() {
         </Button>
       </div>
 
-      {/* Main Content - Slightly more padding for better balance */}
-      <main className="relative flex flex-col items-center justify-center min-h-screen px-2 py-1 pt-8 overflow-hidden">
-        {/* Card Stack - Large but not maximum width */}
+      {/* Main Content - Minimal padding to maximize card width */}
+      <main className="relative flex flex-col items-center justify-center min-h-screen px-1 py-1 pt-8 overflow-hidden">
+        {/* Card Stack - Maximum width container */}
         <div
-          className="relative w-full max-w-9xl h-[56rem] flex items-center justify-center overflow-hidden"
+          className="relative w-full max-w-none h-[56rem] flex items-center justify-center overflow-hidden"
           style={{
             maskImage: `linear-gradient(to bottom, black 0%, black ${clipPosition}%, transparent ${clipPosition}%), linear-gradient(to right, black 0%, black 100%)`,
             WebkitMaskImage: `linear-gradient(to bottom, black 0%, black ${clipPosition}%, transparent ${clipPosition}%), linear-gradient(to right, black 0%, black 100%)`,
@@ -249,7 +249,7 @@ export default function SceneMakerPage2() {
         </div>
 
         {/* Timeline */}
-        <div className="w-full max-w-9xl flex justify-start mt-6">
+        <div className="w-full flex justify-start mt-6 px-4">
           <div className="text-white font-medium text-lg">Jul 19 - 1349</div>
         </div>
 
