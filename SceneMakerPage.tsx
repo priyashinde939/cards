@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { gsap } from "gsap"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 
@@ -28,37 +28,40 @@ export default function SceneMakerPage2() {
     const mainElement = document.querySelector("main")
     if (!mainElement) return
 
-    // Get container width for responsive sizing
-    const containerWidth = Math.min(window.innerWidth * 0.9, 1200) // Max 1200px, 90% of viewport
+    // Get container width for responsive sizing - slightly reduced from maximum
+    const containerWidth = Math.min(window.innerWidth * 0.96, 1800) // Reduced from 0.99 to 0.96 and max from 2000 to 1800
 
-    // Dimensions & offsets - responsive to container width
-    const H_EXP = 450,
-      H_COL1 = 52,
-      H_COL2 = 26
-    const W_EXP = containerWidth * 0.85, // 85% of container to prevent clipping
-      W_COL1 = containerWidth * 0.65, // 65% of container
-      W_COL2 = containerWidth * 0.55 // 55% of container
+    // Dimensions & offsets - responsive to container width - slightly smaller than maximum
+    const H_EXP = 650, // Keep height the same
+      H_COL1 = 80, // Keep height the same
+      H_COL2 = 45 // Keep height the same
+
+    // Slightly reduced widths for better balance
+    const W_EXP = containerWidth * 0.93, // Reduced from 96% to 93%
+      W_COL1 = containerWidth * 0.83, // Reduced proportionally
+      W_COL2 = containerWidth * 0.73 // Reduced proportionally
 
     // 🎯 Change this value to customize the gap between cards
     const GAP = 8 // Changed from 3 to 8px - adjust this value to your preference
 
-    const Y_EXP = 0
-    const Y_COL1_UP = -(H_EXP / 2 + GAP + H_COL1 / 2)
-    const Y_COL2_UP = -(H_EXP / 2 + GAP + H_COL1 + GAP + H_COL2 / 2)
-    const Y_COL1_DN = H_EXP / 2 + GAP + H_COL1 / 2
-    const Y_COL2_DN = H_EXP / 2 + GAP + H_COL1 + GAP + H_COL2 / 2
+    const DOWNWARD_OFFSET = 40 // Move cards down by 40px to overlap button
+    const Y_EXP = 0 + DOWNWARD_OFFSET
+    const Y_COL1_UP = -(H_EXP / 2 + GAP + H_COL1 / 2) + DOWNWARD_OFFSET
+    const Y_COL2_UP = -(H_EXP / 2 + GAP + H_COL1 + GAP + H_COL2 / 2) + DOWNWARD_OFFSET
+    const Y_COL1_DN = H_EXP / 2 + GAP + H_COL1 / 2 + DOWNWARD_OFFSET
+    const Y_COL2_DN = H_EXP / 2 + GAP + H_COL1 + GAP + H_COL2 / 2 + DOWNWARD_OFFSET
 
     const animateCardsToPosition = (targetIndex: number, direction: 1 | -1 | null = null) => {
       // Recalculate dimensions for responsive sizing
-      const currentContainerWidth = Math.min(window.innerWidth * 0.9, 1200)
-      const currentW_EXP = currentContainerWidth * 0.85
-      const currentW_COL1 = currentContainerWidth * 0.65
-      const currentW_COL2 = currentContainerWidth * 0.55
+      const currentContainerWidth = Math.min(window.innerWidth * 0.96, 1800)
+      const currentW_EXP = currentContainerWidth * 0.93
+      const currentW_COL1 = currentContainerWidth * 0.83
+      const currentW_COL2 = currentContainerWidth * 0.73
 
       // Calculate clipping position: bottom of expanded card + gap
       const expandedCardBottom = Y_EXP + H_EXP / 2
       const clipLine = expandedCardBottom + GAP
-      const containerHeight = 640 // 40rem = 640px
+      const containerHeight = 900 // Increased from 640px to 750px
       const clipPositionPercent = ((containerHeight / 2 + clipLine) / containerHeight) * 100
       setClipPosition(clipPositionPercent)
 
@@ -122,7 +125,6 @@ export default function SceneMakerPage2() {
             // Force the card to start from below, like the first scroll
             const activeCardBottom = Y_EXP + H_EXP / 2
             const startingY = activeCardBottom + GAP + H_COL1 + 80
-
             // Set starting position immediately before animating
             gsap.set(card, {
               x: "-50%",
@@ -220,11 +222,11 @@ export default function SceneMakerPage2() {
         </Button>
       </div>
 
-      {/* Main Content */}
-      <main className="relative flex flex-col items-center min-h-screen p-4 pt-16 overflow-hidden">
-        {/* Card Stack */}
+      {/* Main Content - Slightly more padding for better balance */}
+      <main className="relative flex flex-col items-center justify-center min-h-screen px-2 py-1 pt-8 overflow-hidden">
+        {/* Card Stack - Large but not maximum width */}
         <div
-          className="relative w-full max-w-5xl h-[40rem] flex items-center justify-center overflow-hidden"
+          className="relative w-full max-w-9xl h-[56rem] flex items-center justify-center overflow-hidden"
           style={{
             maskImage: `linear-gradient(to bottom, black 0%, black ${clipPosition}%, transparent ${clipPosition}%), linear-gradient(to right, black 0%, black 100%)`,
             WebkitMaskImage: `linear-gradient(to bottom, black 0%, black ${clipPosition}%, transparent ${clipPosition}%), linear-gradient(to right, black 0%, black 100%)`,
@@ -239,27 +241,27 @@ export default function SceneMakerPage2() {
                 cardRefs.current[i] = el
               }}
               className={`absolute shadow-2xl flex items-center justify-center overflow-hidden ${card.gradient}`}
-              style={{ left: "50%", borderRadius: "64px", maxWidth: "calc(133.333cqh)" }}
+              style={{ left: "50%", borderRadius: "64px", maxWidth: "none" }}
             >
-              <span className="text-white text-xl font-bold">{card.title}</span>
+              <span className="text-white text-3xl font-bold">{card.title}</span>
             </div>
           ))}
         </div>
 
         {/* Timeline */}
-        <div className="w-full max-w-5xl flex justify-start mt-4">
-          <div className="text-white font-medium">Jul 19 - 1349</div>
+        <div className="w-full max-w-9xl flex justify-start mt-6">
+          <div className="text-white font-medium text-lg">Jul 19 - 1349</div>
         </div>
 
         {/* New Project Button - positioned with top edge slightly overlapping expanded card bottom */}
-        {/* <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 z-50">
+        <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 z-50">
           <div className="bg-gray-700 hover:bg-gray-600 transition-colors duration-200 rounded-2xl shadow-2xl w-48 h-24 cursor-pointer">
             <div className="flex items-center justify-center h-full gap-4 text-white font-medium">
               <Plus className="h-6 w-6 font-light" />
               <span className="text-base">New project</span>
             </div>
           </div>
-        </div> */}
+        </div>
       </main>
     </div>
   )

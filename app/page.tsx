@@ -1,10 +1,10 @@
 "use client"
 
-import SceneMakerPage2 from "../SceneMakerPage2"
-import ScrollingCards3 from "../scrolling-cards3"
-import ScrollingCards2 from "../scrolling-cards2"
+// import SceneMakerPage2 from "../SceneMakerPage2"
+// import ScrollingCards3 from "../scrolling-cards3"
+// import ScrollingCards2 from "../scrolling-cards2"
 import SceneMakerPage from "../SceneMakerPage"
-import SceneMakerPage3 from "@/SceneMakerPage3"
+// import SceneMakerPage3 from "@/SceneMakerPage3"
 
 export default function Page() {
   // return <ScrollingCards />
@@ -12,7 +12,7 @@ export default function Page() {
    return (
     <div>
       {/* <ScrollingCards2 /> */}
-      <SceneMakerPage3/>
+      <SceneMakerPage/>
     </div>
   );
 }
